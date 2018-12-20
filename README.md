@@ -104,26 +104,31 @@ factor = ident | number | "(" expression ")".
 
 2. 由于使用go会编译报错，故当读到文件末尾的时候直接关闭文件并结束程序。
 
-   ```
-   Goto statements are not allowed between different procedures
-   ```
+```
+Goto statements are not allowed between different procedures
+```
 
-   ```pascal
-    if eof(file_in) {如果已到文件尾} 
-    then begin 
-        write(file_out,'PROGRAM INCOMPLETE'); {报错}
-        close(file_in);	
-        close(file_out);{关闭文件}
-        exit; {退出}
-    end; 
-   ```
+```pascal
+if eof(file_in) {如果已到文件尾} 
+then begin 
+    write(file_out,'PROGRAM INCOMPLETE'); {报错}
+    close(file_in);	
+    close(file_out);{关闭文件}
+    exit; {退出}
+end; 
+```
 
 3. input为pl0源文件文件名，output为输出文件名
 
    - 在主程序增加文件操作
-   - 将write和writeln从控制台输出改为写入输出文件中
+   - write和read中的标准输入输出改为文件输入输出。
 
 ```pascal
+{增加全局变量定义}
+file_in : text;    {源代码文件}      
+file_out :  text;  {输出文件}
+...
+
 begin  {主程序}
  	assign(file_in,paramstr(1));
     assign(file_out,paramstr(2));	{将文件名字符串变量赋值给文件变量}
@@ -136,12 +141,6 @@ end.
 ```
 
 ```pascal
-{增加全局变量定义}
-file_in : text;    {源代码文件}      
-file_out :  text;  {输出文件}
-...
-
-
  {读新的一行} 
  ll := 0; 
  cc := 0; 
@@ -223,7 +222,11 @@ begin
 end.
 ```
 
-输出结果
+输出结果，包括：
+
+- 输入的pl0源文件的字符
+- 生成的助记符（汇编指令）
+- 数据栈顶的运行结果（START PL/0 END PL/0之间）
 
 ```
     0 const m = 7, n = 85; 

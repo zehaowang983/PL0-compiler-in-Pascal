@@ -1,7 +1,6 @@
-program PL0; 
+program PL0(input,output); 
 { PL/0 compiler with code generation }	
 {带有代码生成的 PL0 编译程序} 
-// label 99; 
 
 {常量定义}
 const 
@@ -71,9 +70,6 @@ var
 
     file_in : text;    {源代码文件}      
     file_out :  text;  {输出文件}
-    filename_in : string;  {源程序文件名}
-    filename_out : string; {输出文件名}
-
 
 procedure error (n : integer);  {错误处理程序}
     begin 
@@ -91,7 +87,8 @@ procedure getsym; {词法分析程序}
                 if eof(file_in) {如果已到文件尾} 
                 then begin 
                         write(file_out,'PROGRAM INCOMPLETE'); {报错}
-                        close(file_in);	{关闭文件}
+                        close(file_in);	
+                        close(file_out);{关闭文件}
                         exit; {退出}
                     end; 
                     {读新的一行} 
@@ -216,7 +213,8 @@ procedure gen(x : fct; y, z : integer); {目标代码生成过程,x表示PCODE�
         if cx > cxmax {如果当前指令序号>代码的最大长度}
         then begin 
                 write(file_out,'PROGRAM TOO LONG'); 
-                close(file_in);	{关闭文件}
+                close(file_in);	
+                close(file_out); {关闭文件}
                 exit
             end; 
         with code[cx] do {在代码数组 cx 位置生成一条新代码} 
@@ -773,12 +771,8 @@ procedure  interpret; {解释执行程序}
 
 
 begin  {主程序}
-    writeln('请输入PL0源文件名 : ');
-    readln(filename_in);	
-    writeln('请输入输出文件名 : ');
-    readln(filename_out);	
-    assign(file_in,filename_in);
-    assign(file_out,filename_out);	{将文件名字符串变量赋值给文件变量}
+    assign(file_in,paramstr(1));
+    assign(file_out,paramstr(2));	{将文件名字符串变量赋值给文件变量}
     reset(file_in);
     rewrite(file_out);	{打开文件}
 

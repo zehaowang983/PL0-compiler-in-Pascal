@@ -12,9 +12,7 @@ Usage:
 
 `fpc pl0_compiler.pas`
 
-`./pl0_compiler`
-
-然后输入pl0源文件和输出文件名，如`pl0_source.pas和result.txt`
+`./pl0_compiler <pl0_src> <output>` 
 
 
 
@@ -104,19 +102,31 @@ factor = ident | number | "(" expression ")".
 ```
 
 
-2. 将input改成读入源文件，将output改成写入输出文件
+2. 由于使用go会编译报错，故当读到文件末尾的时候直接关闭文件并结束程序。
+
+   ```
+   Goto statements are not allowed between different procedures
+   ```
+
+   ```pascal
+    if eof(file_in) {如果已到文件尾} 
+    then begin 
+        write(file_out,'PROGRAM INCOMPLETE'); {报错}
+        close(file_in);	
+        close(file_out);{关闭文件}
+        exit; {退出}
+    end; 
+   ```
+
+3. input为pl0源文件文件名，output为输出文件名
+
    - 在主程序增加文件操作
-   - 将input改为文件句柄
    - 将write和writeln从控制台输出改为写入输出文件中
 
 ```pascal
 begin  {主程序}
-    writeln('请输入PL0源文件名 : ');
-    readln(filename_in);	
-    writeln('请输入输出文件名 : ');
-    readln(filename_out);	
-    assign(file_in,filename_in);
-    assign(file_out,filename_out);	{将文件名字符串变量赋值给文件变量}
+ 	assign(file_in,paramstr(1));
+    assign(file_out,paramstr(2));	{将文件名字符串变量赋值给文件变量}
     reset(file_in);
     rewrite(file_out);	{打开文件}
 	...
@@ -129,16 +139,9 @@ end.
 {增加全局变量定义}
 file_in : text;    {源代码文件}      
 file_out :  text;  {输出文件}
-filename_in : string;  {源程序文件名}
-filename_out : string; {输出文件名}
 ...
 
- if eof(file_in) {如果已到文件尾} 
- then begin 
-     write(file_out,'PROGRAM INCOMPLETE'); {报错}
-     close(file_in);	{关闭文件}
-     exit; {退出}
- end; 
+
  {读新的一行} 
  ll := 0; 
  cc := 0; 

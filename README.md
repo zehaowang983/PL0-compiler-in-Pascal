@@ -403,3 +403,337 @@ START PL/0
 END PL/0
 ```
 
+
+
+## 扩展Read和Write语句
+
+1. 首先增加保留字表中的条目，并将保留字的个数增加到13个，注意因为记号的长度为10，不足则补空格
+
+   ```pascal
+   norw = 13; {保留字的个数} 
+   al = 10; {记号的长度} 
+   
+   word[1]  := 'begin     '; word[2]  := 'call      ';
+   word[3]  := 'const     '; word[4]  := 'do        ';
+   word[5]  := 'end       '; word[6]  := 'if        ';
+   word[7]  := 'odd       '; word[8]  := 'procedure ';
+   word[9]  := 'read      '; word[10] := 'then      '; 
+   word[11] := 'var       '; word[12] := 'while     '; 
+   word[13] := 'write     '; {保留字表改为小写字母,所有字符都预留的相同的长度}
+   ```
+
+2. 增加symbol记号中的定义，用于对read和write词法分析，并增加read和write保留字对应的记号
+
+   ```pascal
+   symbol = (...,writesym,readsym)
+   
+   wsym[1] := beginsym;   wsym[2] := callsym;
+   wsym[3] := constsym;   wsym[4] := dosym;
+   wsym[5] := endsym;     wsym[6] := ifsym;
+   wsym[7] := oddsym;     wsym[8] := procsym;
+   wsym[9] := readsym     wsym[10] := thensym;    
+   wsym[11] := varsym;    wsym[12] := whilesym;  
+   wsym[13] := writesym; {保留字对应的记号,添加read和write的保留字记号}
+   ```
+
+3. pl0中的语句可以以read或者write开始
+
+   ```pascal
+   statbegsys := [beginsym, callsym, ifsym, whilesym , writesym, readsym]; {语句的开始符号}
+   ```
+
+4. 增加助记符RED和WRT
+
+   ```
+   mnemonic[lit] := 'LIT  ';    mnemonic[opr] := 'OPR  ';
+   mnemonic[lod] := 'LOD  ';    mnemonic[sto] := 'STO  ';
+   mnemonic[cal] := 'CAL  ';    mnemonic[int] := 'INT  ';
+   mnemonic[jmp] := 'JMP  ';    mnemonic[jpc] := 'JPC  '; 
+   mnemonic[red] := 'RED  ';    mnemonic[wrt] := 'WRT  ';{中间代码指令的字符串，长度为5}
+   ```
+
+5. 增加文法分析程序中语句procedure对保留字read和write的处理
+
+   - 合法的read则生成gen(red,lev-level,adr)指令
+   - 合法的write则生成gen(wrt,0,0)指令
+
+   ```pascal
+    else if sym = readsym	{处理read关键字} then 
+    begin
+        getsym;	{获取下一个sym类型}
+        if sym = lparen	{read的后面应该接左括号} 
+        then begin
+            repeat	{循环开始}
+                getsym;	{获取下一个sym类型}
+                if sym = ident	{如果第一个sym标识符}
+                then begin	
+                    i := position(id);	{记录当前符号在符号表中的位置}
+                    if i = 0	{如果i为0,说明符号表中没有找到id对应的符号}
+                    then error(11)	{报11号错误}
+                    else if table[i].kind <> variable {如果找到了,但该符号的类型不是变量}
+                    then begin
+                    error(12);	{报12号错误,不能像常量和过程赋值}
+                    i := 0	{将i置零}
+                end
+                else with table[i] do	{如果是变量类型}
+                		gen(red,lev-level,adr)	{生成一条red指令,读取数据}
+                end
+                else error(4);	{如果左括号后面跟的不是标识符,报4号错误}
+                getsym;	{获取下一个sym类型}
+            until sym <> comma	{直到符号不是逗号,循环结束}
+        end
+        else error(40);	{如果read后面跟的不是左括号,报40号错误}
+        if sym <> rparen	{如果上述内容之后接的不是右括号}
+        then error(22);	{报22号错误}
+        getsym	{获取下一个sym类型}
+    end
+   
+   else if sym = writesym	{处理write关键字} then 
+   begin
+       getsym;	{获取下一个sym类型}
+       if sym = lparen	{默认write右边应该加一个左括号}
+       then begin
+           repeat	{循环开始}
+               getsym;	{获取下一个sym类型}
+               expression([rparen,comma]+fsys);	{分析括号中的表达式}
+               gen(wrt,0,0);	{生成一个wrt，用来输出内容}
+               until sym <> comma;	{知道读取到的sym不是逗号}
+               if sym <> rparen	{如果内容结束没有右括号}
+               then error(22);	{报22号错误}
+           getsym	{获取下一个sym类型}
+       end
+       else error(40)	{如果write后面没有跟左括号}
+   end;
+   ```
+
+6. 在interpret解释执行程序中加入对red和wrt指令的寄存器和输入输出操作
+
+   ```pascal
+   red : begin	{对red指令}
+       writeln('请输入: ');	{输出提示信息到标准输出屏幕上}
+       readln(s[base(l)+a]); {读一行数据,读入到相差l层,层内偏移为a的数据栈中的数据的信息}
+   end;
+   
+   wrt : begin	{对wrt指令}
+       writeln(file_out,s[t]);	{输出栈顶的信息}
+       t := t+1	{栈顶上移}
+   end
+   ```
+
+
+
+为PL0源程序增加输入输出语句
+
+```pascal
+const m = 7, n = 85; 
+
+var x, y, z, q, r, z1; 
+
+procedure multiply; 
+    var a, b; 
+    begin 
+        a := x; 
+        b := y; 
+        z := 0;
+        while b > 0 do 
+        begin 
+            if odd b then z := z + a; 
+                a := 2*a ; b := b/2 ; 
+        end
+    end;
+    
+procedure divide; 
+    var w; 
+    begin r := x; q := 0; w := y; 
+    while w <= r do 
+        w := 2*w; 
+        while w > y do
+        begin 
+            q := 2*q; 
+            w := w/2; 
+            if w <= r then 
+            begin 
+                r := r-w; 
+                q := q+1 
+            end 
+        end
+    end;
+
+procedure gcd;
+    var f, g ; 
+    begin 
+        f := x; 
+        g := y; 
+        while f <> g do 
+        begin 
+            if f < g then 
+                g := g-f; 
+            if g < f then 
+                f := f-g; 
+        end; 
+        z := f 
+    end;
+
+begin
+    read(x);
+    call multiply;
+    z1 := z;
+    call divide;
+    call gcd;
+    write(z1,q,r,z);
+    write((q+r)*z1/z);
+end.
+```
+
+
+
+输出的运行结果
+
+![1](Assets/2.jpg)
+
+```pascal
+..
+START PL/0
+10 {z1}
+10 {q}
+0  {r}
+1  {z}
+100 {(q+r)*z1/z}
+END PL/0
+```
+
+产生的中间代码
+
+```
+    1 
+    {源码略去}
+    2  INT    0    5
+    3  LOD    1    3
+    4  STO    0    3
+    5  LOD    1    4
+    6  STO    0    4
+    7  LIT    0    0
+    8  STO    1    5
+    9  LOD    0    4
+   10  LIT    0    0
+   11  OPR    0   12
+   12  JPC    0   29
+   13  LOD    0    4
+   14  OPR    0    6
+   15  JPC    0   20
+   16  LOD    1    5
+   17  LOD    0    3
+   18  OPR    0    2
+   19  STO    1    5
+   20  LIT    0    2
+   21  LOD    0    3
+   22  OPR    0    4
+   23  STO    0    3
+   24  LOD    0    4
+   25  LIT    0    2
+   26  OPR    0    5
+   27  STO    0    4
+   28  JMP    0    9
+   29  OPR    0    0
+   30     
+   {源码略去}
+   31  INT    0    4
+   32  LOD    1    3
+   33  STO    1    7
+   34  LIT    0    0
+   35  STO    1    6
+   36  LOD    1    4
+   37  STO    0    3
+   38  LOD    0    3
+   39  LOD    1    7
+   40  OPR    0   13
+   41  JPC    0   47
+   42  LIT    0    2
+   43  LOD    0    3
+   44  OPR    0    4
+   45  STO    0    3
+   46  JMP    0   38
+   47  LOD    0    3
+   48  LOD    1    4
+   49  OPR    0   12
+   50  JPC    0   72
+   51  LIT    0    2
+   52  LOD    1    6
+   53  OPR    0    4
+   54  STO    1    6
+   55  LOD    0    3
+   56  LIT    0    2
+   57  OPR    0    5
+   58  STO    0    3
+   59  LOD    0    3
+   60  LOD    1    7
+   61  OPR    0   13
+   62  JPC    0   71
+   63  LOD    1    7
+   64  LOD    0    3
+   65  OPR    0    3
+   66  STO    1    7
+   67  LOD    1    6
+   68  LIT    0    1
+   69  OPR    0    2
+   70  STO    1    6
+   71  JMP    0   47
+   72  OPR    0    0
+   73 
+   {源码略去}
+   74  INT    0    5
+   75  LOD    1    3
+   76  STO    0    3
+   77  LOD    1    4
+   78  STO    0    4
+   79  LOD    0    3
+   80  LOD    0    4
+   81  OPR    0    9
+   82  JPC    0  100
+   83  LOD    0    3
+   84  LOD    0    4
+   85  OPR    0   10
+   86  JPC    0   91
+   87  LOD    0    4
+   88  LOD    0    3
+   89  OPR    0    3
+   90  STO    0    4
+   91  LOD    0    4
+   92  LOD    0    3
+   93  OPR    0   10
+   94  JPC    0   99
+   95  LOD    0    3
+   96  LOD    0    4
+   97  OPR    0    3
+   98  STO    0    3
+   99  JMP    0   79
+  100  LOD    0    3
+  101  STO    1    5
+  102  OPR    0    0
+  {源码略去}
+  103  INT    0    9
+  104  RED    0    3
+  105  CAL    0    2
+  106  LOD    0    5
+  107  STO    0    8
+  108  CAL    0   31
+  109  CAL    0   74
+  110  LOD    0    8
+  111  WRT    0    0
+  112  LOD    0    6
+  113  WRT    0    0
+  114  LOD    0    7
+  115  WRT    0    0
+  116  LOD    0    5
+  117  WRT    0    0
+  118  LOD    0    6
+  119  LOD    0    7
+  120  OPR    0    2
+  121  LOD    0    8
+  122  OPR    0    4
+  123  LOD    0    5
+  124  OPR    0    5
+  125  WRT    0    0
+  126  OPR    0    0
+```
+

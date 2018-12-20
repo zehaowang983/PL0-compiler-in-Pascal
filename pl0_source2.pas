@@ -47,10 +47,12 @@ procedure gcd;
         z := f 
     end;
 
-begin  
-    x := m; y := n; call multiply;
-    x := 25; y := 3; call divide;
-    x := 84; y:= 36; call gcd; 
+begin
+    read(x);
+    call multiply;
+    z1 := z;
+    call divide;
+    call gcd;
+    write(z1,q,r,z);
+    write((q+r)*z1/z);
 end.
-
-

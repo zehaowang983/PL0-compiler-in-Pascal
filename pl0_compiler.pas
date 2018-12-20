@@ -7,7 +7,7 @@ const
     norw = 13; {保留字的个数} 
     txmax = 100; {标识符表长度} 
     nmax = 14; {数字的最大位数} 
-    al = 10; {标识符的长度} 
+    al = 10; {记号的长度} 
     amax = 2047; {最大地址} 
     levmax = 3; {程序体嵌套的最大深度} 
     cxmax = 200; {代码数组的大小}
@@ -757,7 +757,7 @@ procedure  interpret; {解释执行程序}
                         end;
 
                     red : begin	{对red指令}
-                            writeln(file_out,'read: ');	{输出提示信息}
+                            writeln('请输入: ');	{输出提示信息到标准输出即屏幕}
                             readln(s[base(l)+a]); {读一行数据,读入到相差l层,层内偏移为a的数据栈中的数据的信息}
                         end;
                     wrt : begin	{对wrt指令}
@@ -778,21 +778,21 @@ begin  {主程序}
 
     for ch := 'A' to ';' do  ssym[ch] := nul; {ASCII码的顺序}
     
-    word[1] := 'begin     '; word[2] := 'call      ';
-    word[3] := 'const     '; word[4] := 'do        ';
-    word[5] := 'end       '; word[6] := 'if        ';
-    word[7] := 'odd       '; word[8] := 'procedure ';
-    word[9] := 'then      '; word[10] := 'var       ';
-    word[11] := 'while     ';word[12] := 'write     ';
-    word[13] := 'read    ';{保留字表改为小写字母,所有字符都预留的相同的长度}
+    word[1]  := 'begin     '; word[2]  := 'call      ';
+    word[3]  := 'const     '; word[4]  := 'do        ';
+    word[5]  := 'end       '; word[6]  := 'if        ';
+    word[7]  := 'odd       '; word[8]  := 'procedure ';
+    word[9]  := 'read      '; word[10] := 'then      '; 
+    word[11] := 'var       '; word[12] := 'while     '; 
+    word[13] := 'write     '; {保留字表改为小写字母,所有字符都预留的相同的长度}
 
     wsym[1] := beginsym;   wsym[2] := callsym;
     wsym[3] := constsym;   wsym[4] := dosym;
     wsym[5] := endsym;     wsym[6] := ifsym;
     wsym[7] := oddsym;     wsym[8] := procsym;
-    wsym[9] := thensym;    wsym[10] := varsym;
-    wsym[11] := whilesym;  wsym[12] := writesym;
-    wsym[13] := readsym; {保留字对应的标识符,添加read和write的保留字}
+    wsym[9] := readsym;     wsym[10] := thensym;    
+    wsym[11] := varsym;    wsym[12] := whilesym;  
+    wsym[13] := writesym; {保留字对应的记号,添加read和write的保留字记号}
 
     ssym['+'] := plus;      ssym['-'] := minus;
     ssym['*'] := times;     ssym['/'] := slash;
@@ -801,14 +801,14 @@ begin  {主程序}
     ssym['.'] := period;    ssym['<'] := lss;      
     ssym['>'] := gtr;       ssym[';'] := semicolon; {算符和标点符号的记号}
 
-    mnemonic[lit] := 'LIT  ';     mnemonic[opr] := 'OPR  ';
+    mnemonic[lit] := 'LIT  ';    mnemonic[opr] := 'OPR  ';
     mnemonic[lod] := 'LOD  ';    mnemonic[sto] := 'STO  ';
     mnemonic[cal] := 'CAL  ';    mnemonic[int] := 'INT  ';
     mnemonic[jmp] := 'JMP  ';    mnemonic[jpc] := 'JPC  '; 
-    mnemonic[red] := 'RED  '; mnemonic[wrt] := 'WRT  ';{中间代码指令的字符串，长度为5}
+    mnemonic[red] := 'RED  ';    mnemonic[wrt] := 'WRT  ';{中间代码指令的字符串，长度为5}
   
     declbegsys := [constsym, varsym, procsym]; {说明语句的开始符号}
-    statbegsys := [beginsym, callsym, ifsym, whilesym]; {语句的开始符号}
+    statbegsys := [beginsym, callsym, ifsym, whilesym , writesym, readsym]; {语句的开始符号}
     facbegsys := [ident, number, lparen]; {因子的开始符号}
     err := 0; {发现错误的个数}
     cc := 0; {当前行中输入字符的指针} 

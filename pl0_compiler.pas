@@ -778,34 +778,34 @@ begin  {主程序}
 
     for ch := 'A' to ';' do  ssym[ch] := nul; {ASCII码的顺序}
     
-    word[1]  := 'begin     '; word[2]  := 'call      ';
-    word[3]  := 'const     '; word[4]  := 'do        ';
-    word[5]  := 'end       '; word[6]  := 'if        ';
-    word[7]  := 'odd       '; word[8]  := 'procedure ';
-    word[9]  := 'read      '; word[10] := 'then      '; 
-    word[11] := 'var       '; word[12] := 'while     '; 
-    word[13] := 'write     '; {保留字表改为小写字母,所有字符都预留的相同的长度}
-
-    wsym[1] := beginsym;   wsym[2] := callsym;
-    wsym[3] := constsym;   wsym[4] := dosym;
-    wsym[5] := endsym;     wsym[6] := ifsym;
-    wsym[7] := oddsym;     wsym[8] := procsym;
-    wsym[9] := readsym;     wsym[10] := thensym;    
-    wsym[11] := varsym;    wsym[12] := whilesym;  
-    wsym[13] := writesym; {保留字对应的记号,添加read和write的保留字记号}
-
-    ssym['+'] := plus;      ssym['-'] := minus;
-    ssym['*'] := times;     ssym['/'] := slash;
-    ssym['('] := lparen;    ssym[')'] := rparen;
-    ssym['='] := eql;       ssym[','] := comma;
-    ssym['.'] := period;    ssym['<'] := lss;      
-    ssym['>'] := gtr;       ssym[';'] := semicolon; {算符和标点符号的记号}
-
-    mnemonic[lit] := 'LIT  ';    mnemonic[opr] := 'OPR  ';
-    mnemonic[lod] := 'LOD  ';    mnemonic[sto] := 'STO  ';
-    mnemonic[cal] := 'CAL  ';    mnemonic[int] := 'INT  ';
-    mnemonic[jmp] := 'JMP  ';    mnemonic[jpc] := 'JPC  '; 
-    mnemonic[red] := 'RED  ';    mnemonic[wrt] := 'WRT  ';{中间代码指令的字符串，长度为5}
+    word[1]  := 'begin     ';   word[2]  := 'call      ';
+    word[3]  := 'const     ';   word[4]  := 'do        ';
+    word[5]  := 'end       ';   word[6]  := 'if        ';
+    word[7]  := 'odd       ';   word[8]  := 'procedure ';
+    word[9]  := 'read      ';   word[10] := 'then      '; 
+    word[11] := 'var       ';   word[12] := 'while     '; 
+    word[13] := 'write     ';   {保留字表改为小写字母,所有字符都预留的相同的长度}
+  
+    wsym[1] := beginsym;        wsym[2] := callsym;
+    wsym[3] := constsym;        wsym[4] := dosym;
+    wsym[5] := endsym;          wsym[6] := ifsym;
+    wsym[7] := oddsym;          wsym[8] := procsym;
+    wsym[9] := readsym;         wsym[10] := thensym;    
+    wsym[11] := varsym;         wsym[12] := whilesym;  
+    wsym[13] := writesym;       {保留字对应的记号,添加read和write的保留字记号}
+  
+    ssym['+'] := plus;          ssym['-'] := minus;
+    ssym['*'] := times;         ssym['/'] := slash;
+    ssym['('] := lparen;        ssym[')'] := rparen;
+    ssym['='] := eql;           ssym[','] := comma;
+    ssym['.'] := period;        ssym['<'] := lss;      
+    ssym['>'] := gtr;           ssym[';'] := semicolon; {算符和标点符号的记号}
+  
+    mnemonic[lit] := 'LIT  ';   mnemonic[opr] := 'OPR  ';
+    mnemonic[lod] := 'LOD  ';   mnemonic[sto] := 'STO  ';
+    mnemonic[cal] := 'CAL  ';   mnemonic[int] := 'INT  ';
+    mnemonic[jmp] := 'JMP  ';   mnemonic[jpc] := 'JPC  '; 
+    mnemonic[red] := 'RED  ';   mnemonic[wrt] := 'WRT  ';{中间代码指令的字符串，长度为5}
   
     declbegsys := [constsym, varsym, procsym]; {说明语句的开始符号}
     statbegsys := [beginsym, callsym, ifsym, whilesym , writesym, readsym]; {语句的开始符号}
@@ -816,6 +816,7 @@ begin  {主程序}
     ll := 0; {输入当前行的长度} 
     ch := ' '; {当前输入的字符}
     kk := al; {标识符的长度}
+    
     getsym; {取下一个记号}
     block(0, 0, [period]+declbegsys+statbegsys); {处理程序体}
     if sym <> period then error(9); {如果当前记号不是句号, 则出错}
@@ -825,14 +826,3 @@ begin  {主程序}
     close(file_in);	
     close(file_out);	{关闭文件}
 end.
-
-
-
-
-
-
-
-
-
-
-                    

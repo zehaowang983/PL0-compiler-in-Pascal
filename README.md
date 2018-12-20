@@ -43,7 +43,7 @@ factor = ident | number | "(" expression ")".
 
 **PL/0** is a [programming language](https://en.wikipedia.org/wiki/Programming_language), intended as an [educational programming language](https://en.wikipedia.org/wiki/Educational_programming_language), that is similar to but much simpler than [Pascal](https://en.wikipedia.org/wiki/Pascal_(programming_language)), a [general-purpose programming language](https://en.wikipedia.org/wiki/General-purpose_programming_language). It serves as an example of how to construct a [compiler](https://en.wikipedia.org/wiki/Compiler). 
 
-- 无实型
+- 无实数类型
 - 只有if和while流控制语句
 
 
@@ -60,7 +60,7 @@ factor = ident | number | "(" expression ")".
 
 
 
-在高级语言中，有三个基本术语要记住：
+在高级语言中，有三个基本术语：
 
 1. 源代码 --Pascal源代码文件通常以"`.pas`"或者"`.pp`"作为后缀。
 2. 目标代码 -- 编译的结果。目标代码通常程序的一个模块，而且由于它不完整，它还不能运行。在DOS/Windows系统中，这种文件通常的后缀名是"`.obj`"
@@ -575,10 +575,12 @@ procedure gcd;
     end;
 
 begin
-    read(x);
+    read(x,y);
     call multiply;
     z1 := z;
+    read(x,y);
     call divide;
+    read(x,y);
     call gcd;
     write(z1,q,r,z);
     write((q+r)*z1/z);
@@ -594,11 +596,11 @@ end.
 ```pascal
 ..
 START PL/0
-10 {z1}
-10 {q}
-0  {r}
-1  {z}
-100 {(q+r)*z1/z}
+21 {z1}
+4  {q}
+8  {r}
+8  {z}
+31 {(q+r)*z1/z}
 END PL/0
 ```
 
@@ -713,27 +715,32 @@ END PL/0
   {源码略去}
   103  INT    0    9
   104  RED    0    3
-  105  CAL    0    2
-  106  LOD    0    5
-  107  STO    0    8
-  108  CAL    0   31
-  109  CAL    0   74
-  110  LOD    0    8
-  111  WRT    0    0
-  112  LOD    0    6
-  113  WRT    0    0
-  114  LOD    0    7
-  115  WRT    0    0
-  116  LOD    0    5
-  117  WRT    0    0
-  118  LOD    0    6
+  105  RED    0    4
+  106  CAL    0    2
+  107  LOD    0    5
+  108  STO    0    8
+  109  RED    0    3
+  110  RED    0    4
+  111  CAL    0   31
+  112  RED    0    3
+  113  RED    0    4
+  114  CAL    0   74
+  115  LOD    0    8
+  116  WRT    0    0
+  117  LOD    0    6
+  118  WRT    0    0
   119  LOD    0    7
-  120  OPR    0    2
-  121  LOD    0    8
-  122  OPR    0    4
-  123  LOD    0    5
-  124  OPR    0    5
-  125  WRT    0    0
-  126  OPR    0    0
+  120  WRT    0    0
+  121  LOD    0    5
+  122  WRT    0    0
+  123  LOD    0    6
+  124  LOD    0    7
+  125  OPR    0    2
+  126  LOD    0    8
+  127  OPR    0    4
+  128  LOD    0    5
+  129  OPR    0    5
+  130  WRT    0    0
+  131  OPR    0    0
 ```
 

@@ -48,10 +48,12 @@ procedure gcd;
     end;
 
 begin
-    read(x);
+    read(x,y);
     call multiply;
     z1 := z;
+    read(x,y);
     call divide;
+    read(x,y);
     call gcd;
     write(z1,q,r,z);
     write((q+r)*z1/z);

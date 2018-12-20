@@ -69,12 +69,15 @@ var
                 variable, prosedure : (level, adr : integer) {如果是变量或过程，保存存放层数和偏移地址}
             end;
 
-    fin : text;    {源代码文件}       
-    sfile: string;  {源程序文件名}
+    file_in : text;    {源代码文件}      
+    file_out :  text;  {输出文件}
+    filename_in : string;  {源程序文件名}
+    filename_out : string; {输出文件名}
+
 
 procedure error (n : integer);  {错误处理程序}
     begin 
-        writeln( '****', ' ':cc-1, '^', n:2 );{cc 为当前行已读的字符数, n 为错误号,报错提示信息，'↑'指向出错位置，并提示错误类型}
+        writeln( file_out,'****', ' ':cc-1, '^', n:2 );{cc 为当前行已读的字符数, n 为错误号,报错提示信息，'↑'指向出错位置，并提示错误类型}
         err := err + 1 {错误数 err 加 1} 
     end {error};
     
@@ -85,25 +88,25 @@ procedure getsym; {词法分析程序}
         begin 
             if cc = ll  {如果 cc 指向行末,读完一行（行指针与该行长度相等）} 
             then begin {开始读取下一行}
-                if eof(fin) {如果已到文件尾} 
+                if eof(file_in) {如果已到文件尾} 
                 then begin 
-                        write('PROGRAM INCOMPLETE'); {报错}
-                        close(fin);	{关闭文件}
+                        write(file_out,'PROGRAM INCOMPLETE'); {报错}
+                        close(file_in);	{关闭文件}
                         exit; {退出}
                     end; 
                     {读新的一行} 
                 ll := 0; 
                 cc := 0; 
-                write(cx : 5, ' '); {cx : 5 位数,输出代码地址，宽度为5} 
-                while not eoln(fin) do {如果不是行末} 
+                write(file_out,cx : 5, ' '); {cx : 5 位数,输出代码地址，宽度为5} 
+                while not eoln(file_in) do {如果不是行末} 
                     begin 
                         ll := ll + 1; {将行缓冲区的长度+1}
-                        read(fin,ch);	{从文件中读取一个字符到ch中}
-                        write(ch); {控制台输出ch}
+                        read(file_in,ch);	{从文件中读取一个字符到ch中}
+                        write(file_out,ch); {控制台输出ch}
                         line[ll] := ch {把这个字符放到当前行末尾}
                     end; 
-                writeln; {换行}
-                readln(fin);	{源文件读取从下一行开始}
+                writeln(file_out); {换行}
+                readln(file_in);	{源文件读取从下一行开始}
                 ll := ll + 1; {将行缓冲区的长度+1}
                 line[ll] := ' ' { process end-line }	{行数组最后一个元素为空格}
             end; 
@@ -212,8 +215,8 @@ procedure gen(x : fct; y, z : integer); {目标代码生成过程,x表示PCODE�
     begin 
         if cx > cxmax {如果当前指令序号>代码的最大长度}
         then begin 
-                write('PROGRAM TOO LONG'); 
-                close(fin);	{关闭文件}
+                write(file_out,'PROGRAM TOO LONG'); 
+                close(file_in);	{关闭文件}
                 exit
             end; 
         with code[cx] do {在代码数组 cx 位置生成一条新代码} 
@@ -319,7 +322,7 @@ procedure block(lev, tx : integer; fsys : symset); {进行语法分析的主程�
                 with code[i] do {打印第 i 条代码} 
                     {i: 代码序号; mnemonic[f]: 功能码的字符串; l: 相对层号(层差); a: 相对地址或运算号码} 
                     {格式化输出}
-                    writeln(i, mnemonic[f] : 5, l : 3, a : 5) 
+                    writeln(file_out, i:5, mnemonic[f] : 7, l : 3, a : 5) 
         end {listcode};
 
     procedure statement(fsys : symset); {语句处理的过程}
@@ -522,25 +525,27 @@ procedure block(lev, tx : integer; fsys : symset); {进行语法分析的主程�
             else if sym = readsym	{处理read关键字} then 
             begin
                 getsym;	{获取下一个sym类型}
-                if sym = lparen	{read的后面应该接左括号} then
-                repeat	{循环开始}
-                    getsym;	{获取下一个sym类型}
-                    if sym = ident	{如果第一个sym标识符}
-                    then begin	
-                        i := position(id);	{记录当前符号在符号表中的位置}
-                        if i = 0	{如果i为0,说明符号表中没有找到id对应的符号}
-                        then error(11)	{报11号错误}
-                        else if table[i].kind <> variable {如果找到了,但该符号的类型不是变量}
-                        then begin
-                                error(12);	{报12号错误,不能像常量和过程赋值}
-                                i := 0	{将i置零}
+                if sym = lparen	{read的后面应该接左括号} 
+                then begin
+                        repeat	{循环开始}
+                            getsym;	{获取下一个sym类型}
+                            if sym = ident	{如果第一个sym标识符}
+                            then begin	
+                                i := position(id);	{记录当前符号在符号表中的位置}
+                                if i = 0	{如果i为0,说明符号表中没有找到id对应的符号}
+                                then error(11)	{报11号错误}
+                                else if table[i].kind <> variable {如果找到了,但该符号的类型不是变量}
+                                then begin
+                                        error(12);	{报12号错误,不能像常量和过程赋值}
+                                        i := 0	{将i置零}
+                                    end
+                                else with table[i] do	{如果是变量类型}
+                                        gen(red,lev-level,adr)	{生成一条red指令,读取数据}
                             end
-                        else with table[i] do	{如果是变量类型}
-                                gen(red,lev-level,adr)	{生成一条red指令,读取数据}
-                            end
-                    else error(4);	{如果左括号后面跟的不是标识符,报4号错误}
-                    getsym;	{获取下一个sym类型}
-                until sym <> comma	{直到符号不是逗号,循环结束}
+                            else error(4);	{如果左括号后面跟的不是标识符,报4号错误}
+                            getsym;	{获取下一个sym类型}
+                        until sym <> comma	{直到符号不是逗号,循环结束}
+                    end
                 else error(40);	{如果read后面跟的不是左括号,报40号错误}
                 if sym <> rparen	{如果上述内容之后接的不是右括号}
                 then error(22);	{报22号错误}
@@ -668,7 +673,7 @@ procedure  interpret; {解释执行程序}
         end {base};
 
     begin  
-        writeln('START PL/0');
+        writeln(file_out,'START PL/0');
         t := 0; {栈顶地址寄存器}
         b := 1; {基地址寄存器}
         p := 0; {程序地址寄存器}
@@ -754,24 +759,28 @@ procedure  interpret; {解释执行程序}
                         end;
 
                     red : begin	{对red指令}
-                            writeln('read: ');	{输出提示信息}
+                            writeln(file_out,'read: ');	{输出提示信息}
                             readln(s[base(l)+a]); {读一行数据,读入到相差l层,层内偏移为a的数据栈中的数据的信息}
                         end;
                     wrt : begin	{对wrt指令}
-                            writeln(s[t]);	{输出栈顶的信息}
+                            writeln(file_out,s[t]);	{输出栈顶的信息}
                             t := t+1	{栈顶上移}
                         end
                 end {with, case}
         until p = 0; {程序一直执行到p取最外层主程序的返回地址0时为止}
-        write('END PL/0');
+        writeln(file_out,'END PL/0');
     end {interpret};
 
 
 begin  {主程序}
     writeln('请输入PL0源文件名 : ');
-    readln(sfile);	{文件名保存至sfile}
-    assign(fin,sfile);	{将文件名字符串变量sfile赋值给文件变量fin}
-    reset(fin);	{打开fin}
+    readln(filename_in);	
+    writeln('请输入输出文件名 : ');
+    readln(filename_out);	
+    assign(file_in,filename_in);
+    assign(file_out,filename_out);	{将文件名字符串变量赋值给文件变量}
+    reset(file_in);
+    rewrite(file_out);	{打开文件}
 
     for ch := 'A' to ';' do  ssym[ch] := nul; {ASCII码的顺序}
     
@@ -798,11 +807,11 @@ begin  {主程序}
     ssym['.'] := period;    ssym['<'] := lss;      
     ssym['>'] := gtr;       ssym[';'] := semicolon; {算符和标点符号的记号}
 
-    mnemonic[lit] := 'LIT';     mnemonic[opr] := 'OPR';
-    mnemonic[lod] := 'LOD';    mnemonic[sto] := 'STO';
-    mnemonic[cal] := 'CAL';    mnemonic[int] := 'INT';
-    mnemonic[jmp] := 'JMP';    mnemonic[jpc] := 'JPC'; 
-    mnemonic[red] := 'RED  '; mnemonic[wrt] := 'WRT  ';{中间代码指令的字符串}
+    mnemonic[lit] := 'LIT  ';     mnemonic[opr] := 'OPR  ';
+    mnemonic[lod] := 'LOD  ';    mnemonic[sto] := 'STO  ';
+    mnemonic[cal] := 'CAL  ';    mnemonic[int] := 'INT  ';
+    mnemonic[jmp] := 'JMP  ';    mnemonic[jpc] := 'JPC  '; 
+    mnemonic[red] := 'RED  '; mnemonic[wrt] := 'WRT  ';{中间代码指令的字符串，长度为5}
   
     declbegsys := [constsym, varsym, procsym]; {说明语句的开始符号}
     statbegsys := [beginsym, callsym, ifsym, whilesym]; {语句的开始符号}
@@ -819,8 +828,8 @@ begin  {主程序}
     if err = 0 then interpret {如果编译无错误, 则解释执行中间代码}
     else write('ERRORS IN PL/0 PROGRAM');
 
-    writeln;	{换行}
-    close(fin);	{关闭源文件程序}
+    close(file_in);	
+    close(file_out);	{关闭文件}
 end.
 
 

@@ -12,7 +12,6 @@ procedure multiply;
         begin 
             if odd b then z := z + a; 
                 a := 2*a ; b := b/2 ; 
-            write(z);
         end
     end;
     

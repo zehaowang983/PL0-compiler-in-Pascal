@@ -737,7 +737,7 @@ procedure  interpret; {解释执行程序}
                         end;
                     sto : begin {当前指令是保存变量值(sto, l, a)指令}
                             s[base(l) + a] := s[t];  
-                            {writeln(s[t]);}
+                            writeln(file_out,s[t]);
                             {根据静态链SL,将栈顶的值存入层差为l,相对地址为a的变量中}
                             t := t-1 {栈顶指针减1}
                         end;

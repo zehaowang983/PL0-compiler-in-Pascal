@@ -262,12 +262,12 @@ end.
 
 - 输入pl0源文件的字符
 - 生成的中间代码（栈机器代码）
-- 数据栈顶的运行结果（START PL/0和END PL/0之间的interpret，由于未加入输出语句，故为空）
+- 数据栈顶的运行结果（START PL/0和END PL/0之间的interpret，其中sto指令会输出栈顶数据）
 
 ```
-    0 const m = 7, n = 85; 
+       0 const m = 7, n = 85; 
     1 
-    1 var x, y, z, q, r; 
+    1 var x, y, z, q, r, z1; 
     1 
     1 procedure multiply; 
     1     var a, b; 
@@ -418,7 +418,7 @@ end.
   109     x := 25; y := 3; call divide;
   114     x := 84; y:= 36; call gcd; 
   119 end.
-  103  INT    0    8
+  103  INT    0    9
   104  LIT    0    7
   105  STO    0    3
   106  LIT    0   85
@@ -436,6 +436,57 @@ end.
   118  CAL    0   74
   119  OPR    0    0
 START PL/0
+7
+85
+7
+85
+0
+7
+14
+42
+28
+21
+35
+56
+10
+112
+5
+147
+224
+2
+448
+1
+595
+896
+0
+25
+3
+25
+0
+3
+6
+12
+24
+48
+0
+24
+1
+1
+2
+12
+4
+6
+8
+3
+84
+36
+84
+36
+48
+12
+24
+12
+12
 END PL/0
 ```
 
@@ -542,9 +593,16 @@ END PL/0
    end;
    ```
 
-6. 在interpret解释执行程序中加入对red和wrt指令的输入输出操作
+6. 在interpret解释执行程序中加入对red和wrt指令的输入输出操作，并且取消sto指令中的输出语句
 
    ```pascal
+   sto : begin {当前指令是保存变量值(sto, l, a)指令}
+       s[base(l) + a] := s[t];  
+       //{writeln(file_out,s[t])};
+       {根据静态链SL,将栈顶的值存入层差为l,相对地址为a的变量中}
+       t := t-1 {栈顶指针减1}
+   end;
+   
    red : begin	{对red指令}
        writeln('请输入: ');	{输出提示信息到标准输出屏幕上}
        readln(s[base(l)+a]); {读一行数据,读入到相差l层,层内偏移为a的数据栈中的数据的信息}
